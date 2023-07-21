@@ -4,6 +4,7 @@ from settings import *
 import structures
 from player import Player
 from world import *
+import gui
 
 pygame.init()
 
@@ -12,6 +13,10 @@ window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 game_clock = pygame.time.Clock()
 game_font = pygame.font.Font(None, 30)
 
+current_gui = gui.INGAME
+
+esc_dimmer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+esc_dimmer.set_alpha(128)
 
 world = World()
 
@@ -29,15 +34,19 @@ def render_world(camera_x, camera_y, world):
             canvas.blit(block.texture, ((key[0] * ZOOM + camera_x * ZOOM) + SCREEN_WIDTH // 2, (key[1] * ZOOM + camera_y * ZOOM) + SCREEN_HEIGHT // 2))
     return canvas
 
-def render_hud(canvas):
+def render_hud():
+    global current_gui
     screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    screen.blit(canvas, (0, 0))
-    pos_text = game_font.render(f'X: {int(player.get_x())} Y: {int(player.get_y() + 64)}', True, colors.BLACK)
+    if current_gui == gui.INGAME or current_gui == gui.PAUSE_GAME:
+        screen.blit(render_world(player.get_x(), player.get_y(), world), (0, 0))
+        pos_text = game_font.render(f'X: {int(player.get_x())} Y: {int(player.get_y() + 64)}', True, colors.BLACK)
 
-    # temp text for testing
-    #highest_point = game_font.render(f'The highest point is {world.get_highest_point(int(player.get_x()))}', True, colors.BLACK)
+        # temp text for testing
+        #highest_point = game_font.render(f'The highest point is {world.get_highest_point(int(player.get_x()))}', True, colors.BLACK)
 
-    screen.blit(pos_text, (0, 0))
+        screen.blit(pos_text, (0, 0))
+    if current_gui == gui.PAUSE_GAME:
+        screen.blit(esc_dimmer, (0, 0))
     #screen.blit(highest_point, (0, 15))
 
     return screen
@@ -51,19 +60,26 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if current_gui == gui.INGAME:
+                    current_gui = gui.PAUSE_GAME
+                elif current_gui == gui.PAUSE_GAME:
+                    current_gui = gui.INGAME
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_s]:
-        player.set_y(player.get_y() - PLAYER_MOVE_SPEED)
-    if keys[pygame.K_w]:
-        player.set_y(player.get_y() + PLAYER_MOVE_SPEED)
-    if keys[pygame.K_a]:
-        player.set_x(player.get_x() + PLAYER_MOVE_SPEED)
-    if keys[pygame.K_d]:
-        player.set_x(player.get_x() - PLAYER_MOVE_SPEED)
+    if current_gui == gui.INGAME:
+        if keys[pygame.K_s]:
+            player.set_y(player.get_y() - PLAYER_MOVE_SPEED)
+        if keys[pygame.K_w]:
+            player.set_y(player.get_y() + PLAYER_MOVE_SPEED)
+        if keys[pygame.K_a]:
+            player.set_x(player.get_x() + PLAYER_MOVE_SPEED)
+        if keys[pygame.K_d]:
+            player.set_x(player.get_x() - PLAYER_MOVE_SPEED)
+    
 
-    world_render = render_world(player.get_x(), player.get_y(), world)
-    final_render = render_hud(world_render)
+    final_render = render_hud()
 
     #print(f'Player x {player.get_x()}, Player y: {player.get_y()}')
 
