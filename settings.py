@@ -9,3 +9,5 @@ ZOOM = 39 # originally was 40 but reducing it reduces the random white lines fro
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+GRAVITY = 1.2
+TERMINAL_VELOCITY = 10

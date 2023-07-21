@@ -2,6 +2,7 @@ from settings import *
 import random, chunk_handler, yaml, utils
 from blocks import *
 
+
 class WorldGenerator:
     def gen_y_column(x, amplifier = 1, max_height = MAX_WORLD_HEIGHT // 2):
         #blocks = list(GRASS for i in range(max_height))
@@ -37,15 +38,18 @@ class WorldGenerator:
         
         for ore in ORE_BLOCKS:
             ore_config = utils.get_ore_gen_settings(ore.name)
-            for gen in range(ore_config['gens-per-chunk']):
-                gen_location_x = random.randint(0, CHUNK_SIZE) + offset_in_chunks * CHUNK_SIZE
-                gen_location_y = utils.translate_y_axis(random.randint(ore_config['min-y'], ore_config['max-y']))
-                for i in range(random.randint(ore_config['min-vein-size'], ore_config['max-vein-size'])):
-                    if (gen_location_x, gen_location_y) in blocks.keys():
-                        if blocks[(gen_location_x, gen_location_y)] == STONE:
-                            blocks[(gen_location_x, gen_location_y)] = ore
-                            next_location = utils.get_random_coord_around(gen_location_x, gen_location_y)
-                            gen_location_x, gen_location_y = next_location[0], next_location[1]
+            for c in range(len(ore_config)):
+                config = ore_config[c]
+                for gen in range(config['gens-per-chunk']):
+                    gen_location_x = random.randint(0, CHUNK_SIZE) + offset_in_chunks * CHUNK_SIZE
+                    gen_location_y = utils.translate_y_axis(random.randint(config['min-y'], config['max-y']))
+                    for i in range(random.randint(config['min-vein-size'], config['max-vein-size'])):
+                        if (gen_location_x, gen_location_y) in blocks.keys():
+                            if blocks[(gen_location_x, gen_location_y)] == STONE:
+                                blocks[(gen_location_x, gen_location_y)] = ore
+                                next_location = utils.get_random_coord_around(gen_location_x, gen_location_y)
+                                gen_location_x, gen_location_y = next_location[0], next_location[1]
+
 
         chunk = chunk_handler.Chunk()
         chunk.blocks = blocks

@@ -2,7 +2,7 @@ import pygame, os, utils
 
 class Block:
     def __init__(self, name = None):
-        self.texture = utils.get_texture(name)
+        self.texture = utils.get_block_texture(name)
         self.name = name
 
 

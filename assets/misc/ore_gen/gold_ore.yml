@@ -1,5 +1,12 @@
-min-y: 0
-max-y: 64
-gens-per-chunk: 2
-min-vein-size: 1
-max-vein-size: 2
+-
+  min-y: 25
+  max-y: 35
+  gens-per-chunk: 2
+  min-vein-size: 2
+  max-vein-size: 3
+-
+  min-y: 0
+  max-y: 64
+  gens-per-chunk: 2
+  min-vein-size: 1
+  max-vein-size: 2

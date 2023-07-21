@@ -10,10 +10,19 @@ pygame.init()
 
 window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+pygame.display.set_caption('Cave game (Updated)')
+
 game_clock = pygame.time.Clock()
 game_font = pygame.font.Font(None, 30)
 
 current_gui = gui.INGAME
+
+onscreen_blocks = []
+y_velocity = 0
+player_on_block = False
+gravity_amplifier = 0.3
+debug_menu_open = True
+player_jumped = False
 
 esc_dimmer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 esc_dimmer.set_alpha(128)
@@ -25,13 +34,16 @@ for i in range(10):
     world.gen_chunk(i)
 
 def render_world(camera_x, camera_y, world):
-    global ZOOM, SCREEN_HEIGHT, SCREEN_WIDTH
+    global ZOOM, SCREEN_HEIGHT, SCREEN_WIDTH, onscreen_blocks
+    onscreen_blocks = []
     canvas = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     canvas.fill(colors.WHITE)
     for key in world.blocks:
         block = world.blocks[key]
         if is_on_screen(camera_x, camera_y, key[0], key[1]):
             canvas.blit(block.texture, ((key[0] * ZOOM + camera_x * ZOOM) + SCREEN_WIDTH // 2, (key[1] * ZOOM + camera_y * ZOOM) + SCREEN_HEIGHT // 2))
+            onscreen_blocks.append(pygame.Rect(key[0] * ZOOM + camera_x * ZOOM + SCREEN_WIDTH // 2, (key[1] * ZOOM + camera_y * ZOOM) + SCREEN_HEIGHT // 2, ZOOM, ZOOM))
+            
     return canvas
 
 def render_hud():
@@ -39,19 +51,30 @@ def render_hud():
     screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     if current_gui == gui.INGAME or current_gui == gui.PAUSE_GAME:
         screen.blit(render_world(player.get_x(), player.get_y(), world), (0, 0))
-        pos_text = game_font.render(f'X: {int(player.get_x())} Y: {int(player.get_y() + 64)}', True, colors.BLACK)
+        if debug_menu_open:
+            pos_text = game_font.render(f'X: {int(player.get_x())} Y: {int(player.get_y() + 64)} FPS: {int(game_clock.get_fps())}', True, colors.BLACK)
+            
+            for block in onscreen_blocks:
+                pygame.draw.rect(screen, colors.AQUA, block, 1)
+            screen.blit(pos_text, (0, 0))
+            if player_on_block:
+                pygame.draw.rect(screen, colors.RED, player_hitbox, 1)
+            else:
+                pygame.draw.rect(screen, colors.AQUA, player_hitbox, 1)
 
-        # temp text for testing
-        #highest_point = game_font.render(f'The highest point is {world.get_highest_point(int(player.get_x()))}', True, colors.BLACK)
+        screen.blit(player.texture, (SCREEN_WIDTH // 2 - player.texture.get_width() // 2, SCREEN_HEIGHT // 2 - player.texture.get_height() // 2))
 
-        screen.blit(pos_text, (0, 0))
     if current_gui == gui.PAUSE_GAME:
         screen.blit(esc_dimmer, (0, 0))
-    #screen.blit(highest_point, (0, 15))
 
     return screen
 
 player = Player(0, world.get_highest_point(0))
+player_hitbox = player.texture.get_rect()
+player_hitbox = player_hitbox.move(SCREEN_WIDTH // 2 - player.texture.get_width() // 2, SCREEN_HEIGHT // 2 - player.texture.get_height() // 2)
+
+def is_colliding(rect1, rect2):
+    return rect1.colliderect(rect2)
 
 while True:
     game_clock.tick(20)
@@ -66,18 +89,60 @@ while True:
                     current_gui = gui.PAUSE_GAME
                 elif current_gui == gui.PAUSE_GAME:
                     current_gui = gui.INGAME
+            elif event.key == pygame.K_TAB:
+                player.is_flying = not player.is_flying
+                gravity_amplifier = 0.1
+            
+            elif event.key == pygame.K_F3:
+                debug_menu_open = not debug_menu_open
 
     keys = pygame.key.get_pressed()
     if current_gui == gui.INGAME:
         if keys[pygame.K_s]:
-            player.set_y(player.get_y() - PLAYER_MOVE_SPEED)
-        if keys[pygame.K_w]:
-            player.set_y(player.get_y() + PLAYER_MOVE_SPEED)
+            if not player_on_block or player.is_flying:
+                player.set_y(player.get_y() - PLAYER_MOVE_SPEED)
+        if keys[pygame.K_w] or keys[pygame.K_SPACE]:
+            if player.is_flying:
+                player.set_y(player.get_y() + PLAYER_MOVE_SPEED)
+            else:
+                #if player_on_block:
+                player_jumped = True
+                # insert gravity stuff here to make player jump
+
         if keys[pygame.K_a]:
             player.set_x(player.get_x() + PLAYER_MOVE_SPEED)
         if keys[pygame.K_d]:
             player.set_x(player.get_x() - PLAYER_MOVE_SPEED)
     
+    player_on_block = False
+
+    for block in onscreen_blocks:
+        if is_colliding(block, player_hitbox):
+            player_on_block = True
+            gravity_amplifier = 0.6
+            # handle fall damage here with ticks_fallen?
+            player.ticks_fallen = 0
+            
+
+            if block.top < player_hitbox.top:
+                # player should sufficate?
+                pass
+
+        if is_colliding(block, player_hitbox.move(0, -3)):
+            player.set_y(player.get_y() + 0.03)
+
+        if player_on_block:
+            pass
+            #break
+
+    if (not player_on_block and not player.is_flying) or player_jumped:
+        
+        gravity_factor = GRAVITY * gravity_amplifier
+        player.set_y(player.get_y() - gravity_factor)
+        player.ticks_fallen += 1
+        if not gravity_amplifier > TERMINAL_VELOCITY:
+            gravity_amplifier *= GRAVITY
+
 
     final_render = render_hud()
 

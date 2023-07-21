@@ -4,8 +4,14 @@ import pygame, os, yaml
 def merge(dict1, dict2):
     return dict1 | dict2
 
-def get_texture(name_hint, ZOOM = ZOOM):
-    return pygame.transform.scale(pygame.image.load(os.path.join('assets', 'textures', name_hint + '.png')), (ZOOM, ZOOM))
+def get_block_texture(name_hint, ZOOM = ZOOM):
+    return pygame.transform.scale(pygame.image.load(os.path.join('assets', 'textures', 'blocks', name_hint + '.png')), (ZOOM, ZOOM))
+
+def get_entity_texture(name_hint):
+    return pygame.image.load(os.path.join('assets', 'textures', 'entities', name_hint + '.png')) 
+
+def resize_image(image, resize_x, resize_y):
+    return pygame.transform.scale(image, (resize_x, resize_y))
 
 def translate_pos(pos1 = (0, 0), x_move = 0, y_move = 0):
     return (pos1[0] + x_move, pos1[1] + y_move)
