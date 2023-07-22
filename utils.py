@@ -56,3 +56,7 @@ def get_coords_around(x, y):
 
 def get_random_coord_around(x, y):
     return random.choice(get_coords_around(x, y))
+
+def get_center_of_rect(rect):
+    #return (rect.left + (rect.right - rect.left // 2), rect.top + (rect.bottom - rect.top // 2))
+    return (rect.left + (rect.width // 2), rect.top + (rect.height // 2))

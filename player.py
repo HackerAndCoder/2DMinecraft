@@ -25,3 +25,10 @@ class Player:
     
     def update(self):
         self.hitbox = pygame.Rect(self.get_x(), self.get_y() + 2, 1, 2)
+    
+    def get_pos(self):
+        return (self.get_x(), self.get_y())
+    
+    def set_pos(self, pos):
+        self.set_x(pos[0])
+        self.set_y(pos[1])

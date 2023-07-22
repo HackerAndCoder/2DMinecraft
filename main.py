@@ -23,6 +23,7 @@ player_on_block = False
 gravity_amplifier = 0.3
 debug_menu_open = True
 player_jumped = False
+last_player_pos = ()
 
 esc_dimmer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 esc_dimmer.set_alpha(128)
@@ -56,6 +57,8 @@ def render_hud():
             
             for block in onscreen_blocks:
                 pygame.draw.rect(screen, colors.AQUA, block, 1)
+                pygame.draw.circle(screen, colors.BLUE, utils.get_center_of_rect(block), 5, 2)
+
             screen.blit(pos_text, (0, 0))
             if player_on_block:
                 pygame.draw.rect(screen, colors.RED, player_hitbox, 1)
@@ -77,6 +80,7 @@ def is_colliding(rect1, rect2):
     return rect1.colliderect(rect2)
 
 while True:
+    last_player_pos = player.get_pos()
     game_clock.tick(20)
     window.fill(colors.WHITE)
     for event in pygame.event.get():
@@ -118,10 +122,15 @@ while True:
 
     for block in onscreen_blocks:
         if is_colliding(block, player_hitbox):
+            if not player_on_block: # this is when the player hit the ground, this won't be called when the player stays on the ground
+                # handle fall damage here with ticks_fallen?
+                pass
             player_on_block = True
-            gravity_amplifier = 0.6
-            # handle fall damage here with ticks_fallen?
-            player.ticks_fallen = 0
+            
+            block_x = utils.get_center_of_rect(block)[0]
+            if block_x < player_hitbox.center[0] < block_x:
+                player.set_pos(last_player_pos)
+                print('reset_pos')
             
 
             if block.top < player_hitbox.top:
@@ -132,16 +141,11 @@ while True:
             player.set_y(player.get_y() + 0.03)
 
         if player_on_block:
-            pass
-            #break
+            player.ticks_fallen = 0
 
-    if (not player_on_block and not player.is_flying) or player_jumped:
-        
-        gravity_factor = GRAVITY * gravity_amplifier
-        player.set_y(player.get_y() - gravity_factor)
+    if (not player_on_block and not player.is_flying):
         player.ticks_fallen += 1
-        if not gravity_amplifier > TERMINAL_VELOCITY:
-            gravity_amplifier *= GRAVITY
+        player.set_y(player.get_y() - 0.3)
 
 
     final_render = render_hud()
